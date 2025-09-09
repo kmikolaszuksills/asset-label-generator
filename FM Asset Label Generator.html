@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>FM Asset Label Generator</title>
+  <style>
+    body { font-family: "Palatino", URW Palladio L, serif; max-width: 600px; margin: auto; padding: 1rem; }
+    textarea, input, button { width: 100%; box-sizing: border-box; margin-top: .75em; padding: .5em; }
+    #progressContainer { display: none; margin-top: 1em; }
+    #phaseText { margin-bottom: .5em; }
+	  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script type="text/javascript">
+// <![CDATA[
+var colour="#EFBF04";
+var sparkles=120;
+
+/****************************
+*  Tinkerbell Magic Sparkle *
+* (c) 2005 mf2fm web-design *
+*  http://www.mf2fm.com/rv  *
+* DON'T EDIT BELOW THIS BOX *
+****************************/
+var x=ox=400;
+var y=oy=300;
+var swide=800;
+var shigh=600;
+var sleft=sdown=0;
+var tiny=new Array();
+var star=new Array();
+var starv=new Array();
+var starx=new Array();
+var stary=new Array();
+var tinyx=new Array();
+var tinyy=new Array();
+var tinyv=new Array();
+
+window.onload=function() { if (document.getElementById) {
+  var i, rats, rlef, rdow;
+  for (var i=0; i<sparkles; i++) {
+    var rats=createDiv(3, 3);
+    rats.style.visibility="hidden";
+    document.body.appendChild(tiny[i]=rats);
+    starv[i]=0;
+    tinyv[i]=0;
+    var rats=createDiv(5, 5);
+    rats.style.backgroundColor="transparent";
+    rats.style.visibility="hidden";
+    var rlef=createDiv(1, 5);
+    var rdow=createDiv(5, 1);
+    rats.appendChild(rlef);
+    rats.appendChild(rdow);
+    rlef.style.top="2px";
+    rlef.style.left="0px";
+    rdow.style.top="0px";
+    rdow.style.left="2px";
+    document.body.appendChild(star[i]=rats);
+  }
+  set_width();
+  sparkle();
+}}
+
+function sparkle() {
+  var c;
+  if (x!=ox || y!=oy) {
+    ox=x;
+    oy=y;
+    for (c=0; c<sparkles; c++) if (!starv[c]) {
+      star[c].style.left=(starx[c]=x)+"px";
+      star[c].style.top=(stary[c]=y)+"px";
+      star[c].style.clip="rect(0px, 5px, 5px, 0px)";
+      star[c].style.visibility="visible";
+      starv[c]=50;
+      break;
+    }
+  }
+  for (c=0; c<sparkles; c++) {
+    if (starv[c]) update_star(c);
+    if (tinyv[c]) update_tiny(c);
+  }
+  setTimeout("sparkle()", 40);
+}
+
+function update_star(i) {
+  if (--starv[i]==25) star[i].style.clip="rect(1px, 4px, 4px, 1px)";
+  if (starv[i]) {
+    stary[i]+=1+Math.random()*3;
+    if (stary[i]<shigh+sdown) {
+      star[i].style.top=stary[i]+"px";
+      starx[i]+=(i%5-2)/5;
+      star[i].style.left=starx[i]+"px";
+    }
+    else {
+      star[i].style.visibility="hidden";
+      starv[i]=0;
+      return;
+    }
+  }
+  else {
+    tinyv[i]=50;
+    tiny[i].style.top=(tinyy[i]=stary[i])+"px";
+    tiny[i].style.left=(tinyx[i]=starx[i])+"px";
+    tiny[i].style.width="2px";
+    tiny[i].style.height="2px";
+    star[i].style.visibility="hidden";
+    tiny[i].style.visibility="visible"
+  }
+}
+
+function update_tiny(i) {
+  if (--tinyv[i]==25) {
+    tiny[i].style.width="1px";
+    tiny[i].style.height="1px";
+  }
+  if (tinyv[i]) {
+    tinyy[i]+=1+Math.random()*3;
+    if (tinyy[i]<shigh+sdown) {
+      tiny[i].style.top=tinyy[i]+"px";
+      tinyx[i]+=(i%5-2)/5;
+      tiny[i].style.left=tinyx[i]+"px";
+    }
+    else {
+      tiny[i].style.visibility="hidden";
+      tinyv[i]=0;
+      return;
+    }
+  }
+  else tiny[i].style.visibility="hidden";
+}
+
+document.onmousemove=mouse;
+function mouse(e) {
+  set_scroll();
+  y=(e)?e.pageY:event.y+sdown;
+  x=(e)?e.pageX:event.x+sleft;
+}
+
+function set_scroll() {
+  if (typeof(self.pageYOffset)=="number") {
+    sdown=self.pageYOffset;
+    sleft=self.pageXOffset;
+  }
+  else if (document.body.scrollTop || document.body.scrollLeft) {
+    sdown=document.body.scrollTop;
+    sleft=document.body.scrollLeft;
+  }
+  else if (document.documentElement && (document.documentElement.scrollTop || document.documentElement.scrollLeft)) {
+    sleft=document.documentElement.scrollLeft;
+	sdown=document.documentElement.scrollTop;
+  }
+  else {
+    sdown=0;
+    sleft=0;
+  }
+}
+
+window.onresize=set_width;
+function set_width() {
+  if (typeof(self.innerWidth)=="number") {
+    swide=self.innerWidth;
+    shigh=self.innerHeight;
+  }
+  else if (document.documentElement && document.documentElement.clientWidth) {
+    swide=document.documentElement.clientWidth;
+    shigh=document.documentElement.clientHeight;
+  }
+  else if (document.body.clientWidth) {
+    swide=document.body.clientWidth;
+    shigh=document.body.clientHeight;
+  }
+}
+
+function createDiv(height, width) {
+  var div=document.createElement("div");
+  div.style.position="absolute";
+  div.style.height=height+"px";
+  div.style.width=width+"px";
+  div.style.overflow="hidden";
+  div.style.backgroundColor=colour;
+  return (div);
+}
+// ]]>
+</script>
+
+</head>
+<body>
+
+<img
+src="https://64.media.tumblr.com/50580a0bc717b3a1579b5427d42d42c2/83e551c398c42f53-a9/s250x400/cf6508346d511fbdb878660e1280cb57b83a97ec.gif"
+style="display:block; margin:0.5em auto; max-width:100%; height:auto; padding-bottom:30px;"
+  />
+
+  <h1>CPPJ FM Asset Label Generator</h1>
+
+ <p>
+    This tool can generate SVGs in bulk for asset labels sized 2.5cm × 5cm, featuring a specific logo and a QR code linked to the asset code. It’s perfect for laser engraving!
+  </p>
+ 
+<img
+src="https://64.media.tumblr.com/93c40d8bdb54424e6567344174dff8cd/8396c098866efd1f-ca/s250x400/b9046c1d0d2b3ce1044d13412d052d0282dbb1fb.gif"
+style="display:block; margin:0.5em auto; max-width:100%; height:auto;"
+  />
+
+  <label>
+    Asset Codes (Use semicolons as a delimiter):
+    <textarea id="codeList" placeholder="CAMPAM-123; ELECT-45; PLMB-67"></textarea>
+  </label>
+
+<p>
+ 
+</p>
+
+  <label>
+    Logo (SVG only. Ensure it is already prepped for laser engraving and at a 1:1 ratio):
+    <input type="file" id="logoInput" accept="image/svg+xml"/> 
+  </label>
+
+<img
+src="https://64.media.tumblr.com/cf0f7644ad88baa2c3b0d5ce33210c7e/8396c098866efd1f-e1/s250x400/70dfa22a30db06fd951cf5b0419f3f1400389bdf.gif"
+style="display:block; margin:0.5em auto; max-width:100%; height:auto;"
+  />
+
+  <button id="generateBtn" disabled>Generate Labels</button>
+  <button id="downloadBtn" disabled>Download SVGs</button>
+
+  <div id="progressContainer">
+    <div id="phaseText">Phase: Waiting…</div>
+    <progress id="progressBar" value="0" max="1"></progress>
+    <div><span id="progressText">0/0</span> labels</div>
+  </div>
+
+<img
+src="https://64.media.tumblr.com/8c7a76b0d735da6264ec3cde7d25d2b1/83e551c398c42f53-db/s250x400/617e3c09d28477bb059ea01cf7bc5fb24ce1f9c3.gif"
+style="display:block; margin:0.5em auto; max-width:100%; height:auto; padding-top:45px; padding-bottom:20px;"
+  />
+
+<p style="font-size:8px; "> Made by Kennedy Mikolaszuk-Sills, 9/25 </p>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof qrcode !== 'function') {
+      alert('Failed to load QR library.');
+      return;
+    }
+
+    // cm → px @96dpi
+    const cm2px = cm => cm * 96 / 2.54;
+
+    // Label dims (cm)
+    const LABEL_W_CM = 5.0,
+          LABEL_H_CM = 2.5,
+          QR_CM      = 2.3,
+          MARG_CM    = 0.1,
+          RADIUS_CM  = 0.3;
+
+    // Convert to px
+    const W        = cm2px(LABEL_W_CM),
+          H        = cm2px(LABEL_H_CM),
+          qrPx     = Math.round(cm2px(QR_CM)),
+          marginPx = cm2px(MARG_CM),
+          radiusPx = cm2px(RADIUS_CM),
+          halfW    = W / 2,
+          textCX   = halfW + halfW / 2;
+
+    // Asset code font
+    const codePt = 8,
+          codePx = codePt * 96 / 72;
+
+    // UI refs
+    const codesEl    = document.getElementById('codeList'),
+          logoEl     = document.getElementById('logoInput'),
+          genBtn     = document.getElementById('generateBtn'),
+          dlBtn      = document.getElementById('downloadBtn'),
+          progCont   = document.getElementById('progressContainer'),
+          phaseText  = document.getElementById('phaseText'),
+          progBar    = document.getElementById('progressBar'),
+          progText   = document.getElementById('progressText');
+
+    let logoSvgText = '', labels = [];
+
+    function updateState() {
+      genBtn.disabled = !(codesEl.value.trim() && logoSvgText);
+    }
+    codesEl.addEventListener('input', updateState);
+
+    logoEl.addEventListener('change', () => {
+      const f = logoEl.files[0];
+      if (!f || !f.name.toLowerCase().endsWith('.svg')) {
+        logoSvgText = '';
+        updateState();
+        alert('Please upload a valid SVG logo.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        logoSvgText = e.target.result;
+        updateState();
+      };
+      reader.readAsText(f);
+    });
+
+    function slug(name) {
+      return name.replace(/[^A-Za-z0-9\-_]/g,'_').slice(0,100);
+    }
+
+    function download(svgStr, filename) {
+      const blob = new Blob([svgStr], { type:'image/svg+xml' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function buildLabel(code) {
+      // Generate QR <svg>
+      const qr = qrcode(0,'H');
+      qr.addData(code);
+      qr.make();
+      const cell  = qrPx / qr.getModuleCount();
+      const qrStr = qr.createSvgTag(cell,0);
+      const qrEl  = new DOMParser().parseFromString(qrStr,'image/svg+xml').documentElement;
+      const bg    = qrEl.querySelector('rect');
+      if (bg) qrEl.removeChild(bg);
+
+      // Parse logo
+      const logoDoc  = new DOMParser().parseFromString(logoSvgText,'image/svg+xml');
+      const logoRoot = logoDoc.documentElement.cloneNode(true);
+      logoRoot.removeAttribute('width');
+      logoRoot.removeAttribute('height');
+
+      // Container SVG
+      const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
+      svg.setAttribute('width',  `${LABEL_W_CM}cm`);
+      svg.setAttribute('height', `${LABEL_H_CM}cm`);
+      svg.setAttribute('viewBox', `0 0 ${W.toFixed(0)} ${H.toFixed(0)}`);
+
+      // Rounded border
+      const border = document.createElementNS(svg.namespaceURI,'rect');
+      border.setAttribute('x','0');
+      border.setAttribute('y','0');
+      border.setAttribute('width',  W.toFixed(0));
+      border.setAttribute('height', H.toFixed(0));
+      border.setAttribute('rx',     radiusPx.toFixed(0));
+      border.setAttribute('ry',     radiusPx.toFixed(0));
+      border.setAttribute('fill','none');
+      border.setAttribute('stroke','#000');
+      border.setAttribute('stroke-width','1');
+      svg.appendChild(border);
+
+      // Place & size QR in left half, centered vertically
+      const sQR       = 0.9,
+            qrSize    = qrPx * sQR,
+            qrOffsetX = marginPx + (halfW - qrSize)/2,
+            qrOffsetY = (H - qrSize)/2;
+      qrEl.setAttribute('x',      qrOffsetX.toFixed(0));
+      qrEl.setAttribute('y',      qrOffsetY.toFixed(0));
+      qrEl.setAttribute('width',  qrSize.toFixed(0));
+      qrEl.setAttribute('height', qrSize.toFixed(0));
+      svg.appendChild(qrEl);
+
+      // Nested <svg> for logo in right half, centered vertically
+      const logoFrac    = 2/3,
+            logoSize    = halfW * logoFrac,
+            logoOffsetX = halfW + (halfW - logoSize)/2,
+            logoOffsetY = (H - logoSize - codePx)/2 - marginPx/2;
+
+      const logoWrap = document.createElementNS(svg.namespaceURI,'svg');
+      logoWrap.setAttribute('x',      logoOffsetX.toFixed(0));
+      logoWrap.setAttribute('y',      logoOffsetY.toFixed(0));
+      logoWrap.setAttribute('width',  logoSize.toFixed(0));
+      logoWrap.setAttribute('height', logoSize.toFixed(0));
+      let vb = logoRoot.getAttribute('viewBox') || `0 0 ${logoSize.toFixed(0)} ${logoSize.toFixed(0)}`;
+      logoWrap.setAttribute('viewBox', vb);
+      logoWrap.setAttribute('preserveAspectRatio','xMidYMid meet');
+      Array.from(logoRoot.childNodes).forEach(n => {
+        if (n.nodeType === 1) {
+          logoWrap.appendChild(svg.ownerDocument.importNode(n, true));
+        }
+      });
+      svg.appendChild(logoWrap);
+
+      // Asset code under logo
+      const textEl = document.createElementNS(svg.namespaceURI,'text');
+      textEl.setAttribute('x', textCX.toFixed(0));
+      textEl.setAttribute('y', (logoOffsetY + logoSize + marginPx + codePx).toFixed(0));
+      textEl.setAttribute('font-family','Mongolian Baiti, sans-serif');
+      textEl.setAttribute('font-size',  `${codePt}pt`);
+      textEl.setAttribute('text-anchor','middle');
+      textEl.setAttribute('fill','#000');
+      textEl.textContent = code;
+      svg.appendChild(textEl);
+
+      return new XMLSerializer().serializeToString(svg);
+    }
+
+    // Generate labels
+    genBtn.addEventListener('click', () => {
+      const codes = codesEl.value.split(';').map(s=>s.trim()).filter(Boolean);
+      labels = [];
+      progCont.style.display = 'block';
+      phaseText.textContent  = 'Phase: Generating…';
+      progBar.value          = 0;
+      progBar.max            = codes.length;
+      progText.textContent   = `0/${codes.length}`;
+      genBtn.disabled        = true;
+
+      codes.forEach((code,i) => {
+        labels.push({ code, svg: buildLabel(code) });
+        progBar.value++;
+        progText.textContent = `${i+1}/${codes.length}`;
+        if (i+1 === codes.length) dlBtn.disabled = false;
+      });
+
+      phaseText.textContent = 'Phase: Ready to download';
+    });
+
+    // Download labels
+    dlBtn.addEventListener('click', () => {
+      phaseText.textContent = 'Phase: Downloading…';
+      progBar.value         = 0;
+      progBar.max           = labels.length;
+      dlBtn.disabled        = true;
+
+      labels.forEach(({ code, svg }, i) => {
+        download(svg, slug(code) + '.svg');
+        progBar.value++;
+        progText.textContent = `${i+1}/${labels.length}`;
+      });
+
+      phaseText.textContent = 'Phase: Done!';
+    });
+
+    updateState();
+  });
+  </script>
+</body>
+</html>
