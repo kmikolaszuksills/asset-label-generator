@@ -5,17 +5,20 @@
   <title>FM Asset Label Generator</title>
   <style>
     body { font-family: "Palatino", URW Palladio L, serif; max-width: 600px; margin: auto; padding: 1rem; }
-    textarea, input, button { width: 100%; box-sizing: border-box; margin-top: .75em; padding: .5em; }
+    textarea, input, button, select { width: 100%; box-sizing: border-box; margin-top: .75em; padding: .5em; }
     #progressContainer { display: none; margin-top: 1em; }
     #phaseText { margin-bottom: .5em; }
-	  </style>
+  </style>
 
+  <!-- QR library (unchanged) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <!-- JsBarcode library for barcode generation -->
+  <script src="https://cdn.jsdelivr.net/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+
 <script type="text/javascript">
 // <![CDATA[
 var colour="#EFBF04";
 var sparkles=120;
-
 /****************************
 *  Tinkerbell Magic Sparkle *
 * (c) 2005 mf2fm web-design *
@@ -198,32 +201,42 @@ style="display:block; margin:0.5em auto; max-width:100%; height:auto; padding-bo
 	These asset labels can be scanned in the Search field in the OpenGov app.
   </p>
  
+  <label>
+    Asset IDs (Use semicolons as a delimiter):
+    <textarea id="codeList" placeholder="CAMPAM-123; ELECT-45; PLMB-67"></textarea>
+  </label>
+
 <img
 src="https://64.media.tumblr.com/93c40d8bdb54424e6567344174dff8cd/8396c098866efd1f-ca/s250x400/b9046c1d0d2b3ce1044d13412d052d0282dbb1fb.gif"
 style="display:block; margin:0.5em auto; max-width:100%; height:auto;"
   />
 
-  <label>
-    Asset Codes (Use semicolons as a delimiter):
-    <textarea id="codeList" placeholder="CAMPAM-123; ELECT-45; PLMB-67"></textarea>
-  </label>
-
-<p>
- 
-</p>
+ <h3>Full label with logo and asset ID</h3>
 
   <label>
     Logo (SVG only. Ensure it is already prepped for laser engraving and at a 1:1 ratio):
     <input type="file" id="logoInput" accept="image/svg+xml"/> 
   </label>
 
+
+  <button id="generateBtn" disabled>Generate Labels</button>
+  <button id="downloadBtn" disabled>Download SVGs</button>
+
 <img
 src="https://64.media.tumblr.com/cf0f7644ad88baa2c3b0d5ce33210c7e/8396c098866efd1f-e1/s250x400/70dfa22a30db06fd951cf5b0419f3f1400389bdf.gif"
 style="display:block; margin:0.5em auto; max-width:100%; height:auto;"
   />
 
-  <button id="generateBtn" disabled>Generate Labels</button>
-  <button id="downloadBtn" disabled>Download SVGs</button>
+ <h3>Barcode</h3>
+
+  <div style="margin-top:.5em;">
+    <label for="formatSelect" style="display:block; margin-bottom:.25em;">Format:</label>
+    <select id="formatSelect">
+      <option value="png" selected>PNG</option>
+      <option value="jpeg">JPEG</option>
+    </select>
+    <button id="barcodeBtn" disabled>Download Barcodes</button>
+  </div>
 
   <div id="progressContainer">
     <div id="phaseText">Phase: Waiting…</div>
@@ -268,7 +281,7 @@ style="display:block; margin:0.5em auto; max-width:100%; height:auto; padding-to
     const codePt = 8,
           codePx = codePt * 96 / 72;
 
-    // UI refs
+    // refs
     const codesEl    = document.getElementById('codeList'),
           logoEl     = document.getElementById('logoInput'),
           genBtn     = document.getElementById('generateBtn'),
@@ -276,12 +289,16 @@ style="display:block; margin:0.5em auto; max-width:100%; height:auto; padding-to
           progCont   = document.getElementById('progressContainer'),
           phaseText  = document.getElementById('phaseText'),
           progBar    = document.getElementById('progressBar'),
-          progText   = document.getElementById('progressText');
+          progText   = document.getElementById('progressText'),
+          formatSel  = document.getElementById('formatSelect'),
+          barcodeBtn  = document.getElementById('barcodeBtn');
 
     let logoSvgText = '', labels = [];
 
     function updateState() {
-      genBtn.disabled = !(codesEl.value.trim() && logoSvgText);
+      const hasCodes = codesEl.value.trim().length > 0;
+      genBtn.disabled = !(hasCodes && logoSvgText);
+      barcodeBtn.disabled = !hasCodes;
     }
     codesEl.addEventListener('input', updateState);
 
@@ -437,10 +454,80 @@ style="display:block; margin:0.5em auto; max-width:100%; height:auto; padding-to
       phaseText.textContent = 'Phase: Done!';
     });
 
+// Ensure JsBarcode is loaded (dynamically load if missing)
+function loadJsBarcode() {
+  if (window.JsBarcode) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js';
+    s.onload = () => (window.JsBarcode ? resolve() : reject(new Error('JsBarcode not available after load')));
+    s.onerror = () => reject(new Error('Failed to load JsBarcode library'));
+    document.head.appendChild(s);
+  });
+}
+
+// === BARCODE LOGIC ===
+barcodeBtn.addEventListener('click', async () => {
+  try {
+    await loadJsBarcode();
+  } catch (err) {
+    alert('Could not load barcode library: ' + err.message);
+    return;
+  }
+
+  const codes = codesEl.value.split(';').map(s => s.trim()).filter(Boolean);
+  if (!codes.length) {
+    alert('Please enter one or more asset codes (semicolon separated).');
+    return;
+  }
+
+  const format = formatSel.value === 'jpeg' ? 'jpeg' : 'png';
+  const mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+
+  const targetWidth = 1000;
+  const targetHeight = 100;
+  const moduleWidth = 2;
+
+  for (const code of codes) {
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    // Render barcode onto the canvas
+    JsBarcode(canvas, code, {
+      format: "CODE128",
+      displayValue: false,
+      margin: 10,
+      height: targetHeight - 40,
+      width: moduleWidth,
+      background: "#ffffff"
+    });
+
+    // Wait for toBlob and download
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, mime, 1.0));
+    if (!blob) {
+      console.error('toBlob returned null for', code);
+      continue;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = code + '.' + (format === 'jpeg' ? 'jpg' : 'png');
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    await new Promise(r => setTimeout(r, 120));
+  }
+});
+
+    // === END BARCODE LOGIC ===
+
+    // initialize state
     updateState();
   });
   </script>
 </body>
 </html>
-
-
